@@ -8,6 +8,7 @@ Author: Mecistios. Built for AMP 2.8 (.NET 8).
 
 - Reads each AMP instance and the ports it uses (from the instance's `App.Ports`). The ADS controller and suspended instances are skipped.
 - Creates one port forward (Destination NAT rule) per port or contiguous range, with the right protocol (TCP, UDP, or both).
+- Rules match traffic aimed at the firewall itself ("This Firewall") on all interfaces, so only inbound traffic to the firewall is forwarded and NAT loopback keeps working.
 - Leaves RCON and admin ports closed. Those are never forwarded to the internet.
 - Compares that against the forwards already on your firewall:
   - a port already forwarded to the same host is left as it is
@@ -72,7 +73,7 @@ Open the instance configuration and go to Instance Deployment, tab OPNsense Netw
 | OPNsense Port | HTTPS port of the GUI/API (usually 443). |
 | API Key | API key (stored encrypted). |
 | API Secret | API secret (stored encrypted). |
-| WAN Interface | Interface the forwards apply to (usually `wan`). |
+| Interface (optional) | Interface the forwards apply to. Leave blank for all interfaces (recommended, keeps NAT loopback working). |
 | Forward Target LAN IP | The LAN IP that game ports should forward to. |
 | Sync Interval (minutes) | How often the fallback timer runs. 0 turns it off. |
 | Rule Name Prefix | Prefix for the rule descriptions this plugin owns (default `AMP:`). |

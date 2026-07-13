@@ -40,10 +40,10 @@ namespace OpnsensePortSync
             [StoreEncrypted(true)]
             public string ApiSecret = "";
 
-            [WebSetting("WAN Interface",
-                "OPNsense interface the forwards apply to. Usually 'wan'.",
-                false, "", "", "opnsense,wan,interface", false, "wan", "", "", "OPNsense Network Automation", 60)]
-            public string WanInterface = "wan";
+            [WebSetting("Interface (optional)",
+                "Interface the forwards apply to. Leave blank to apply on all interfaces, which is recommended and keeps NAT loopback working. Set an interface name such as 'wan' to restrict it.",
+                false, "", "", "opnsense,wan,interface", false, "", "", "", "OPNsense Network Automation", 60)]
+            public string WanInterface = "";
 
             [WebSetting("Forward Target LAN IP",
                 "The LAN IP of this machine that game ports should be forwarded to (where AMP instances listen).",

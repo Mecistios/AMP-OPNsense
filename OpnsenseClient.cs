@@ -31,7 +31,8 @@ namespace OpnsensePortSync
         public OpnsenseClient(string host, int port, string apiKey, string apiSecret, string wanInterface)
         {
             _baseUrl = $"https://{host}:{port}";
-            _wan = string.IsNullOrWhiteSpace(wanInterface) ? "wan" : wanInterface;
+            // Empty means all interfaces, which is the recommended default and keeps NAT loopback working.
+            _wan = wanInterface ?? "";
             var handler = new HttpClientHandler
             {
                 // OPNsense ships a self-signed cert by default.
@@ -129,6 +130,8 @@ namespace OpnsensePortSync
 
         // Build the {"rule": {...}} body. source/destination are nested objects; OPNsense
         // ignores the flat "destination_port" style, so they have to go in nested.
+        // Destination is "(self)" ("This Firewall"), so only traffic aimed at one of the
+        // firewall's own addresses is forwarded, and NAT loopback keeps working.
         private StringContent RuleBody(DNatRule rule)
         {
             var body = new
@@ -140,7 +143,7 @@ namespace OpnsensePortSync
                     ["ipprotocol"] = "inet",
                     ["protocol"] = rule.Protocol,
                     ["source"] = new Dictionary<string, object> { ["network"] = "any" },
-                    ["destination"] = new Dictionary<string, object> { ["network"] = "any", ["port"] = rule.DestPort },
+                    ["destination"] = new Dictionary<string, object> { ["network"] = "(self)", ["port"] = rule.DestPort },
                     ["target"] = rule.Target,
                     ["local-port"] = rule.LocalPort ?? "",
                     ["descr"] = rule.Descr

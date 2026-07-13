@@ -8,7 +8,7 @@ namespace OpnsensePortSync
         public int Port = 443;
         public string ApiKey = "";
         public string ApiSecret = "";
-        public string WanInterface = "wan";
+        public string WanInterface = "";
         public string TargetLanIp = "";
         public string RuleNamePrefix = "AMP:";
         public string AmpDataPath = "";
