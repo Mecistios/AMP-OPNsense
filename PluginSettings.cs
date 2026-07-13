@@ -41,7 +41,7 @@ namespace OpnsensePortSync
             public string ApiSecret = "";
 
             [WebSetting("Interface (optional)",
-                "Interface the forwards apply to. Leave blank to apply on all interfaces, which is recommended and keeps NAT loopback working. Set an interface name such as 'wan' to restrict it.",
+                "Interface the forwards apply to. Leave blank to apply on all interfaces, which is recommended and keeps NAT loopback working. Set an interface name such as 'wan' to restrict it, or list several separated by commas (for example wan,opt1).",
                 false, "", "", "opnsense,wan,interface", false, "", "", "", "OPNsense Network Automation", 60)]
             public string WanInterface = "";
 

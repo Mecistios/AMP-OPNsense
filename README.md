@@ -73,7 +73,7 @@ Open the instance configuration and go to Instance Deployment, tab OPNsense Netw
 | OPNsense Port | HTTPS port of the GUI/API (usually 443). |
 | API Key | API key (stored encrypted). |
 | API Secret | API secret (stored encrypted). |
-| Interface (optional) | Interface the forwards apply to. Leave blank for all interfaces (recommended, keeps NAT loopback working). |
+| Interface (optional) | Interface the forwards apply to. Leave blank for all interfaces (recommended, keeps NAT loopback working). You can also list several separated by commas, e.g. `wan,opt1`. |
 | Forward Target LAN IP | The LAN IP that game ports should forward to. |
 | Sync Interval (minutes) | How often the fallback timer runs. 0 turns it off. |
 | Rule Name Prefix | Prefix for the rule descriptions this plugin owns (default `AMP:`). |
