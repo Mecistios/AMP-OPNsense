@@ -20,10 +20,16 @@ namespace OpnsensePortSync
             _log = log;
         }
 
+        // Shown when an AMP update outdated this build; the settings cannot load then, so
+        // every other guard would misreport the problem as missing configuration.
+        private const string MismatchMessage = "This plugin build does not match the installed AMP version. Update the plugin from https://github.com/Mecistios/AMP-OPNsense/releases";
+
         [JSONMethod("Test the connection to the OPNsense firewall.",
             "Object with success flag, message and the firmware version.")]
         public async Task<object> TestOpnsenseConnection()
         {
+            if (_plugin.BuildMismatch)
+                return new Dictionary<string, object> { ["success"] = false, ["message"] = MismatchMessage };
             var o = _settings.Opnsense;
             if (string.IsNullOrWhiteSpace(o.Host) || string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.ApiSecret))
                 return new Dictionary<string, object> { ["success"] = false, ["message"] = "Set Host, API key and API secret first." };
@@ -45,6 +51,8 @@ namespace OpnsensePortSync
             "Object with the sync plan (create/update/delete/conflicts).")]
         public async Task<object> SyncNow(bool apply = false)
         {
+            if (_plugin.BuildMismatch)
+                return new Dictionary<string, object> { ["success"] = false, ["message"] = MismatchMessage };
             var o = _settings.Opnsense;
             if (string.IsNullOrWhiteSpace(o.Host) || string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.TargetLanIp))
                 return new Dictionary<string, object> { ["success"] = false, ["message"] = "Set Host, API key and Target LAN IP first." };
@@ -76,6 +84,8 @@ namespace OpnsensePortSync
         [JSONMethod("Test the OPNsense connection.", "Success/failure with the firmware version.")]
         public async Task<ActionResult> TestConnection()
         {
+            if (_plugin.BuildMismatch)
+                return ActionResult.FailureReason((FormattableString)$"{MismatchMessage}", "", (FormattableString)null);
             _log.Info("OPNsense Test Connection requested.");
             var o = _settings.Opnsense;
             if (string.IsNullOrWhiteSpace(o.Host) || string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.ApiSecret))
@@ -101,6 +111,8 @@ namespace OpnsensePortSync
         [JSONMethod("Run a sync now and apply any changes to OPNsense.", "Success/failure with a short summary.")]
         public async Task<ActionResult> RunSync()
         {
+            if (_plugin.BuildMismatch)
+                return ActionResult.FailureReason((FormattableString)$"{MismatchMessage}", "", (FormattableString)null);
             var o = _settings.Opnsense;
             if (string.IsNullOrWhiteSpace(o.Host) || string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.TargetLanIp))
                 return ActionResult.FailureReason((FormattableString)$"Set Host, API key and Target LAN IP first.", "", (FormattableString)null);
@@ -118,6 +130,8 @@ namespace OpnsensePortSync
         [JSONMethod("List the port-forward rules on the OPNsense firewall.", "Object with the current forwards.")]
         public async Task<object> ListOpnsensePortForwards()
         {
+            if (_plugin.BuildMismatch)
+                return new Dictionary<string, object> { ["success"] = false, ["message"] = MismatchMessage };
             try
             {
                 using var c = _plugin.CreateClient();
