@@ -17,6 +17,7 @@ namespace OpnsensePortSync
         public string DestPort;           // "25565" or "20000-20010" or an alias name
         public string Target;             // redirect target IP
         public string LocalPort;          // redirect target port (start port for a range)
+        public string SourceNet = "any";  // "any", an alias name or a network in CIDR form
         public bool Enabled = true;
         public bool IsAutomatic;          // rule OPNsense maintains itself (e.g. anti-lockout)
     }
@@ -73,6 +74,7 @@ namespace OpnsensePortSync
                         Descr = Str(r, "descr"),
                         Protocol = Str(r, "protocol"),
                         DestPort = Str(r, "destination.port"),
+                        SourceNet = Str(r, "source.network") ?? "any",
                         Enabled = Str(r, "disabled") != "1",
                         IsAutomatic = Str(r, "is_automatic") == "1"
                     });
@@ -132,6 +134,8 @@ namespace OpnsensePortSync
         // ignores the flat "destination_port" style, so they have to go in nested.
         // Destination is "(self)" ("This Firewall"), so only traffic aimed at one of the
         // firewall's own addresses is forwarded, and NAT loopback keeps working.
+        // Source is "any" unless the user limited it to an alias or network; OPNsense
+        // validates the value itself and rejects an alias that does not exist.
         private StringContent RuleBody(DNatRule rule)
         {
             var body = new
@@ -142,7 +146,7 @@ namespace OpnsensePortSync
                     ["interface"] = _wan,
                     ["ipprotocol"] = "inet",
                     ["protocol"] = rule.Protocol,
-                    ["source"] = new Dictionary<string, object> { ["network"] = "any" },
+                    ["source"] = new Dictionary<string, object> { ["network"] = string.IsNullOrWhiteSpace(rule.SourceNet) ? "any" : rule.SourceNet.Trim() },
                     ["destination"] = new Dictionary<string, object> { ["network"] = "(self)", ["port"] = rule.DestPort },
                     ["target"] = rule.Target,
                     ["local-port"] = rule.LocalPort ?? "",

@@ -145,15 +145,30 @@ namespace OpnsensePortSync
         // The dedicated Minecraft module has no App.Ports array; its game port is a single
         // Minecraft.PortNumber value. Turn that into one desired port entry. Forwarded as
         // tcp+udp so an enabled query port is covered too.
+        // A server behind a proxy (Velocity, BungeeCord) has Minecraft.StandaloneServer=False.
+        // Players only ever talk to the proxy, so when the user asked for it those servers
+        // get no forward at all (issue #2).
         private List<(string Ref, int Proto, int Port, int Range)> ParseMinecraftPorts(string kvpPath)
         {
             var result = new List<(string, int, int, int)>();
             if (!File.Exists(kvpPath)) return result;
-            string line = File.ReadLines(kvpPath).FirstOrDefault(l => l.StartsWith("Minecraft.PortNumber="));
+            var lines = File.ReadAllLines(kvpPath);
+            if (_cfg.SkipProxiedMinecraft && !IsStandaloneMinecraft(lines)) return result;
+            string line = lines.FirstOrDefault(l => l.StartsWith("Minecraft.PortNumber="));
             if (line == null) return result;
             if (!int.TryParse(line.Substring("Minecraft.PortNumber=".Length).Trim(), out var port)) return result;
             if (port > 0) result.Add(("GamePort", 2, port, 1));
             return result;
+        }
+
+        // Missing key counts as standalone, which is the module default.
+        internal static bool IsStandaloneMinecraft(IEnumerable<string> kvpLines)
+        {
+            const string key = "Minecraft.StandaloneServer=";
+            var line = kvpLines.FirstOrDefault(l => l.StartsWith(key, StringComparison.OrdinalIgnoreCase));
+            if (line == null) return true;
+            var val = line.Substring(key.Length).Trim();
+            return !(val.Equals("false", StringComparison.OrdinalIgnoreCase) || val == "0");
         }
 
         // Parse the App.Ports=[...] JSON array from an instance's <Module>.kvp
@@ -288,20 +303,33 @@ namespace OpnsensePortSync
                     continue;
                 }
 
-                if (mine == null)
+                try
                 {
-                    plan.ToCreate.Add($"{d.RuleName} -> {_cfg.TargetLanIp}:{d.PortSpec}/{d.Proto}");
-                    if (apply) await client.CreatePortForwardAsync(ToRule(d));
+                    if (mine == null)
+                    {
+                        plan.ToCreate.Add($"{d.RuleName} -> {_cfg.TargetLanIp}:{d.PortSpec}/{d.Proto}");
+                        if (apply) await client.CreatePortForwardAsync(ToRule(d));
+                    }
+                    else if (!string.Equals(mine.Protocol, ProtoApi(d.Proto), StringComparison.OrdinalIgnoreCase)
+                             || mine.DestPort != d.PortSpec || mine.LocalPort != d.LocalPort
+                             || !string.Equals(mine.Target, _cfg.TargetLanIp, StringComparison.OrdinalIgnoreCase)
+                             || !string.Equals(mine.SourceNet ?? "any", WantedSource(), StringComparison.OrdinalIgnoreCase)
+                             || !mine.Enabled)
+                    {
+                        plan.ToUpdate.Add($"{d.RuleName} -> {_cfg.TargetLanIp}:{d.PortSpec}/{d.Proto}");
+                        if (apply) await client.UpdatePortForwardAsync(mine.Uuid, ToRule(d));
+                    }
+                    else plan.Unchanged.Add(d.RuleName);
                 }
-                else if (!string.Equals(mine.Protocol, ProtoApi(d.Proto), StringComparison.OrdinalIgnoreCase)
-                         || mine.DestPort != d.PortSpec || mine.LocalPort != d.LocalPort
-                         || !string.Equals(mine.Target, _cfg.TargetLanIp, StringComparison.OrdinalIgnoreCase)
-                         || !mine.Enabled)
+                catch (Exception ex)
                 {
-                    plan.ToUpdate.Add($"{d.RuleName} -> {_cfg.TargetLanIp}:{d.PortSpec}/{d.Proto}");
-                    if (apply) await client.UpdatePortForwardAsync(mine.Uuid, ToRule(d));
+                    // OPNsense refused the rule. A bad Source value is the usual reason, so say so
+                    // and stop here rather than failing the same way on every other rule.
+                    plan.Error = $"OPNsense rejected rule '{d.RuleName}': {ex.Message}";
+                    if (ex.Message.Contains("source"))
+                        plan.Error += " Check the Source setting: it must be an existing alias name or a network like 203.0.113.0/24.";
+                    return plan;
                 }
-                else plan.Unchanged.Add(d.RuleName);
             }
 
             // Orphans: our rules with no matching desired rule -> remove. On a targeted sync,
@@ -324,6 +352,9 @@ namespace OpnsensePortSync
         // AMP protocol -> the value the OPNsense rule expects.
         private static string ProtoApi(string p) => p switch { "tcp" => "tcp", "udp" => "udp", "tcp_udp" => "tcp/udp", _ => "tcp/udp" };
 
+        // Blank source setting means any. Existing rules get updated when this changes.
+        private string WantedSource() => string.IsNullOrWhiteSpace(_cfg.SourceNetwork) ? "any" : _cfg.SourceNetwork.Trim();
+
         private DNatRule ToRule(DesiredRule d) => new DNatRule
         {
             Descr = d.RuleName,
@@ -331,7 +362,8 @@ namespace OpnsensePortSync
             Protocol = ProtoApi(d.Proto),
             DestPort = d.PortSpec,
             Target = _cfg.TargetLanIp,
-            LocalPort = d.LocalPort
+            LocalPort = d.LocalPort,
+            SourceNet = WantedSource()
         };
 
         private static bool ProtoOverlap(string a, string b)

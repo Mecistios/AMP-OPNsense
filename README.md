@@ -10,6 +10,8 @@ Author: Mecistios. Built for AMP 2.8 (.NET 8).
 - Creates one port forward (Destination NAT rule) per port or contiguous range, with the right protocol (TCP, UDP, or both).
 - Rules match traffic aimed at the firewall itself ("This Firewall") on all interfaces, so only inbound traffic to the firewall is forwarded and NAT loopback keeps working.
 - Leaves RCON and admin ports closed. Those are never forwarded to the internet.
+- Can limit who may reach the forwards. Set an OPNsense alias (a GeoIP alias for example) or a network as the source and every rule the plugin manages uses it. Leave it blank for any source.
+- Can skip Minecraft servers that sit behind a proxy such as Velocity or BungeeCord. Those are not standalone servers, so only the proxy needs a forward.
 - Compares that against the forwards already on your firewall:
   - a port already forwarded to the same host is left as it is
   - a port forwarded to a different host is reported as a conflict and not touched
@@ -75,6 +77,8 @@ Open the instance configuration and go to Instance Deployment, tab OPNsense Netw
 | API Secret | API secret (stored encrypted). |
 | Interface (optional) | Interface the forwards apply to. Leave blank for all interfaces (recommended, keeps NAT loopback working). You can also list several separated by commas, e.g. `wan,opt1`. |
 | Forward Target LAN IP | The LAN IP that game ports should forward to. |
+| Source (optional) | Who may reach the forwarded ports. Blank means any. Set an alias name from Firewall > Aliases (for example a GeoIP alias) or a network such as `203.0.113.0/24`. Existing rules are updated on the next sync. OPNsense rejects a name that does not exist and the sync reports it. |
+| Skip Minecraft servers behind a proxy | Off by default. When on, Minecraft instances with `Minecraft.StandaloneServer=False` (behind Velocity or BungeeCord) get no port forward. |
 | Sync Interval (minutes) | How often the fallback timer runs. 0 turns it off. |
 | Rule Name Prefix | Prefix for the rule descriptions this plugin owns (default `AMP:`). |
 | AMP Data Path | Optional. Leave blank to auto detect `instances.json`. |

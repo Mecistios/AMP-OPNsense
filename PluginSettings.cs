@@ -50,6 +50,16 @@ namespace OpnsensePortSync
                 false, "", "", "opnsense,target,ip", false, "192.168.1.50", "", "", "OPNsense Network Automation", 70)]
             public string TargetLanIp = "";
 
+            [WebSetting("Source (optional)",
+                "Who may reach the forwarded ports. Leave blank for any source. Set an OPNsense alias name (for example a GeoIP alias) or a network such as 203.0.113.0/24 to limit the forwards to that source. Existing rules are updated on the next sync.",
+                false, "", "", "opnsense,source,alias", false, "", "", "", "OPNsense Network Automation", 75)]
+            public string SourceNetwork = "";
+
+            [WebSetting("Skip Minecraft servers behind a proxy",
+                "When enabled, Minecraft instances that are not set up as a standalone server (they sit behind a proxy such as Velocity or BungeeCord) get no port forward. Only the proxy itself needs one.",
+                false, "", "", "opnsense,minecraft,proxy", false, "", "", "", "OPNsense Network Automation", 76)]
+            public bool SkipProxiedMinecraft = false;
+
             [WebSetting("Sync Interval (minutes)",
                 "How often to automatically reconcile ports. Set to 0 to only sync manually.",
                 false, "", "", "opnsense,interval", false, "15", "min", "", "OPNsense Network Automation", 80)]

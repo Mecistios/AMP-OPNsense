@@ -168,6 +168,7 @@ namespace OpnsensePortSync
         {
             Host = o.Host, Port = o.Port, ApiKey = o.ApiKey, ApiSecret = o.ApiSecret,
             WanInterface = o.WanInterface, TargetLanIp = o.TargetLanIp,
+            SourceNetwork = o.SourceNetwork, SkipProxiedMinecraft = o.SkipProxiedMinecraft,
             RuleNamePrefix = o.RuleNamePrefix, AmpDataPath = o.AmpDataPath
         };
 

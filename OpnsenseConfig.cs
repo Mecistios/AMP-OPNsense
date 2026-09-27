@@ -10,6 +10,8 @@ namespace OpnsensePortSync
         public string ApiSecret = "";
         public string WanInterface = "";
         public string TargetLanIp = "";
+        public string SourceNetwork = "";
+        public bool SkipProxiedMinecraft = false;
         public string RuleNamePrefix = "AMP:";
         public string AmpDataPath = "";
     }

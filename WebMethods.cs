@@ -117,7 +117,13 @@ namespace OpnsensePortSync
             if (string.IsNullOrWhiteSpace(o.Host) || string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.TargetLanIp))
                 return ActionResult.FailureReason((FormattableString)$"Set Host, API key and Target LAN IP first.", "", (FormattableString)null);
 
-            var plan = await _plugin.RunReconcileAsync(apply: true);
+            SyncPlan plan;
+            try { plan = await _plugin.RunReconcileAsync(apply: true); }
+            catch (Exception ex)
+            {
+                _log.Error($"OPNsense sync failed: {ex.Message}");
+                return ActionResult.FailureReason((FormattableString)$"Sync failed: {ex.Message}", "", (FormattableString)null);
+            }
             if (plan.Error != null)
                 return ActionResult.FailureReason((FormattableString)$"Sync failed: {plan.Error}", "", (FormattableString)null);
 
