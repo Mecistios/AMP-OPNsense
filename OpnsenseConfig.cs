@@ -12,6 +12,7 @@ namespace OpnsensePortSync
         public string TargetLanIp = "";
         public string SourceNetwork = "";
         public bool SkipProxiedMinecraft = false;
+        public string FilterRule = "";      // "" (manual) | "pass" | "rule"
         public string RuleNamePrefix = "AMP:";
         public string AmpDataPath = "";
     }

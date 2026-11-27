@@ -18,6 +18,7 @@ namespace OpnsensePortSync
         public string Target;             // redirect target IP
         public string LocalPort;          // redirect target port (start port for a range)
         public string SourceNet = "any";  // "any", an alias name or a network in CIDR form
+        public string Pass = "";          // "" (manual), "pass" or "rule" (register a filter rule)
         public bool Enabled = true;
         public bool IsAutomatic;          // rule OPNsense maintains itself (e.g. anti-lockout)
     }
@@ -75,6 +76,7 @@ namespace OpnsensePortSync
                         Protocol = Str(r, "protocol"),
                         DestPort = Str(r, "destination.port"),
                         SourceNet = Str(r, "source.network") ?? "any",
+                        Pass = Str(r, "pass") ?? "",
                         Enabled = Str(r, "disabled") != "1",
                         IsAutomatic = Str(r, "is_automatic") == "1"
                     });
@@ -150,6 +152,7 @@ namespace OpnsensePortSync
                     ["destination"] = new Dictionary<string, object> { ["network"] = "(self)", ["port"] = rule.DestPort },
                     ["target"] = rule.Target,
                     ["local-port"] = rule.LocalPort ?? "",
+                    ["pass"] = rule.Pass ?? "",
                     ["descr"] = rule.Descr
                 }
             };

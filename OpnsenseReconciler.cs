@@ -325,6 +325,7 @@ namespace OpnsensePortSync
                              || mine.DestPort != d.PortSpec || mine.LocalPort != d.LocalPort
                              || !string.Equals(mine.Target, _cfg.TargetLanIp, StringComparison.OrdinalIgnoreCase)
                              || !string.Equals(mine.SourceNet ?? "any", WantedSource(), StringComparison.OrdinalIgnoreCase)
+                             || (mine.Pass ?? "") != (_cfg.FilterRule ?? "")
                              || !mine.Enabled)
                     {
                         plan.ToUpdate.Add($"{d.RuleName} -> {_cfg.TargetLanIp}:{d.PortSpec}/{d.Proto}");
@@ -374,7 +375,8 @@ namespace OpnsensePortSync
             DestPort = d.PortSpec,
             Target = _cfg.TargetLanIp,
             LocalPort = d.LocalPort,
-            SourceNet = WantedSource()
+            SourceNet = WantedSource(),
+            Pass = _cfg.FilterRule ?? ""
         };
 
         private static bool ProtoOverlap(string a, string b)

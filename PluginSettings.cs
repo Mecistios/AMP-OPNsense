@@ -5,6 +5,17 @@ namespace OpnsensePortSync
 {
     // Persisted plugin configuration. [Description(...)] is the Configuration menu item;
     // the WebSetting subcategory (below) is the tab shown within it.
+    // What OPNsense does on the filter side of each forward. Values map to the rule's "pass" field.
+    public enum FilterRuleMode
+    {
+        [EnumDisplayName("Manual (add your own firewall rule)", "", "")]
+        Manual = 0,
+        [EnumDisplayName("Pass", "", "")]
+        Pass = 10,
+        [EnumDisplayName("Register rule", "", "")]
+        RegisterRule = 20
+    }
+
     internal class PluginSettings : SettingStore
     {
         [Description("Instance Deployment")]
@@ -59,6 +70,11 @@ namespace OpnsensePortSync
                 "When enabled, Minecraft instances that are not set up as a standalone server (they sit behind a proxy such as Velocity or BungeeCord) get no port forward. Only the proxy itself needs one.",
                 false, "", "", "opnsense,minecraft,proxy", false, "", "", "", "OPNsense Network Automation", 76)]
             public bool SkipProxiedMinecraft = false;
+
+            [WebSetting("Firewall Rule",
+                "How the forwarded traffic is let through. Manual leaves it to a firewall rule you add yourself. Pass lets traffic matching the forward straight through. Register rule has OPNsense add a matching pass rule for every forward, at the bottom of the interface rules. Existing rules are updated on the next sync.",
+                false, "", "", "opnsense,filter,rule,pass", false, "", "", "", "OPNsense Network Automation", 77)]
+            public FilterRuleMode FilterRule = FilterRuleMode.Manual;
 
             [WebSetting("Sync Interval (minutes)",
                 "How often to automatically reconcile ports. Set to 0 to only sync manually.",

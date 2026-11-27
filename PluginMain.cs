@@ -169,6 +169,7 @@ namespace OpnsensePortSync
             Host = o.Host, Port = o.Port, ApiKey = o.ApiKey, ApiSecret = o.ApiSecret,
             WanInterface = o.WanInterface, TargetLanIp = o.TargetLanIp,
             SourceNetwork = o.SourceNetwork, SkipProxiedMinecraft = o.SkipProxiedMinecraft,
+            FilterRule = o.FilterRule switch { FilterRuleMode.Pass => "pass", FilterRuleMode.RegisterRule => "rule", _ => "" },
             RuleNamePrefix = o.RuleNamePrefix, AmpDataPath = o.AmpDataPath
         };
 
